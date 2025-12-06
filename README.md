@@ -63,3 +63,10 @@ python manage.py test tracker
 ## Deploy Notes (high level)
 - Backend: configure Postgres env vars and `ALLOWED_HOSTS`, run `collectstatic` if needed, serve via Gunicorn/Uvicorn + reverse proxy.
 - Frontend: `npm run build`, host static build (S3/CloudFront, Netlify, etc.), set `VITE_API_URL` to your backend. 
+
+## Deployment Checklist (short)
+- Backend deps installed (`pip install -r backend/requirements.txt`) and Postgres up.
+- Env set on server: `SECRET_KEY`, `DEBUG=False`, `ALLOWED_HOSTS=<domain,ip>`, `DB_*` pointing to Postgres.
+- Run DB setup from `backend/`: `python manage.py migrate` then `python manage.py createsuperuser` (optional).
+- Collect static files if serving them: `python manage.py collectstatic`.
+- Start app with a process manager + reverse proxy; confirm an API endpoint (e.g., `/api/dashboard/summary/`) and `/admin` load.
