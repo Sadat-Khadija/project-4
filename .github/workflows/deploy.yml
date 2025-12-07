@@ -1,0 +1,75 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ "main" ]  # change to "master" if your main branch is named that
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Get the code from your GitHub repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Start an SSH agent and load the private key from GitHub Secrets
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      # 3. Trust the EC2 host so SSH doesn’t ask "Are you sure?"
+      - name: Add EC2 host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      # 4. SSH into EC2 and deploy
+      - name: Deploy on EC2
+        run: |
+          ssh ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+          set -e
+
+          # Go to your app folder on EC2
+          cd /home/ubuntu/project-4
+
+          # Make sure this repo on EC2 is already a git clone of your GitHub repo
+          # Get latest code from GitHub main branch
+          git fetch origin
+          git reset --hard origin/main
+
+          # ---------- Backend (Django) ----------
+          cd backend
+
+          # Activate your existing virtual environment "test-env"
+          # Make sure this folder exists: /home/ubuntu/project-4/backend/test-env
+          source test-env/bin/activate
+
+          # Install/upgrade backend dependencies
+          pip install -r requirements.txt
+
+          # Apply database changes
+          python manage.py migrate
+
+          # Collect static files (needed when DEBUG=False)
+          python manage.py collectstatic --noinput
+
+          # ---------- Frontend (React/Vite/etc) ----------
+          cd ../frontend
+
+          # Install node modules and build production bundle
+          npm install
+          npm run build
+
+          # ---------- Restart your tmux-based servers ----------
+
+          # Kill old backend session if it exists, then start a fresh one
+          tmux kill-session -t backend || true
+          tmux new-session -d -s backend 'cd /home/ubuntu/project-4/backend && source test-env/bin/activate && python manage.py runserver 0.0.0.0:8000'
+
+          # Kill old frontend session if it exists, then start a fresh one
+          tmux kill-session -t frontend || true
+          tmux new-session -d -s frontend 'cd /home/ubuntu/project-4/frontend && npm run dev -- --host 0.0.0.0 --port 5173'
+
+          EOF
