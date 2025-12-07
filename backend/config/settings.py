@@ -108,7 +108,12 @@ SIMPLE_JWT = {
 }
 
 # CORS: allow local frontend (adjust as needed)
+# CORS: allow local frontend and optional additional origins via env.
+_extra_cors = os.environ.get("CORS_ALLOWED_ORIGINS", "")
+_extra_cors_list = [o for o in _extra_cors.split(",") if o]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://54.173.248.136:5173",
+    *_extra_cors_list,
 ]
