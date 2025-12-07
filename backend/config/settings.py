@@ -8,9 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "change-me")
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 # Comma-separated env var; default to local hosts and EC2 host for deploy.
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS", "localhost,127.0.0.1,18.222.181.142"
-).split(",")
+ALLOWED_HOSTS = ['localhost', '18.222.181.142']
 
 INSTALLED_APPS = [
     "django.contrib.admin",
