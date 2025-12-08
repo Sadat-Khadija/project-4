@@ -29,6 +29,10 @@ jobs:
             export $(cat .env | xargs)
             python manage.py migrate
 
-            # Restart app (tmux example)
-            tmux kill-session -t app || true
-            tmux new -d -s app "cd ~/project-4/backend && source ~/test-env/bin/activate && export \$(cat .env | xargs) && python manage.py runserver 0.0.0.0:8000 --insecure"
+            # Restart backend tmux session
+            tmux kill-session -t backend || true
+            tmux new -d -s backend "cd /home/ubuntu/project-4/backend && source /home/ubuntu/test-env/bin/activate && export \$(cat .env | xargs) && python manage.py runserver 0.0.0.0:8000 --insecure"
+
+            # Restart frontend tmux session (dev server)
+            tmux kill-session -t frontend || true
+            tmux new -d -s frontend "cd /home/ubuntu/project-4/frontend && npm install && npm run dev -- --host 0.0.0.0 --port 5173"
